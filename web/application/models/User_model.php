@@ -2,8 +2,8 @@
 
 namespace Model;
 use App;
+use Model\Enums\Transaction_type;
 use Exception;
-use http\Client\Curl\User;
 use stdClass;
 use System\Emerald\Emerald_model;
 
@@ -267,22 +267,65 @@ class User_model extends Emerald_model {
      */
     public function add_money(float $sum): bool
     {
-        // TODO: task 4, добавление денег
+        App::get_s()->set_transaction_serializable()->execute();
+        App::get_s()->start_trans()->execute();
 
+        Analytics_model::create([
+            'user_id' => $this->get_id(),
+            'object' => Transaction_type::OBJECT_WALLET,
+            'action' => Transaction_type::ACTION_DEPOSIT,
+            'amount' => $sum
+        ]);
+
+        App::get_s()->from(self::CLASS_TABLE)
+            ->where(['id' => $this->get_id()])
+            ->update(
+                sprintf('wallet_balance = wallet_balance + %s,', App::get_s()->quote($sum)) .
+                sprintf('wallet_total_refilled = wallet_total_refilled + %s', App::get_s()->quote($sum))
+            )
+            ->execute();
+
+        if ( ! App::get_s()->is_affected())
+        {
+            App::get_s()->rollback()->execute();
+            return FALSE;
+        }
+        App::get_s()->commit()->execute();
         return TRUE;
-    }
 
+    }
 
     /**
      * @param float $sum
+     * @param string $object
+     * @param null $object_id
      *
      * @return bool
-     * @throws \ShadowIgniterException
+     *
+     * @throws Exception
      */
-    public function remove_money(float $sum): bool
+    public function remove_money(float $sum, $object = Transaction_type::OBJECT_BOOSTER_PACK, $object_id = null): bool
     {
-        // TODO: task 5, списание денег
+        Analytics_model::create([
+            'user_id' => $this->get_id(),
+            'object' => Transaction_type::OBJECT_BOOSTER_PACK,
+            'object_id' => $object_id,
+            'action' => Transaction_type::ACTION_BUY,
+            'amount' => $sum
+        ]);
 
+        App::get_s()->from(self::CLASS_TABLE)
+            ->where(['id' => $this->get_id()])
+            ->update(
+                sprintf('wallet_balance = wallet_balance - %s,', App::get_s()->quote($sum)) .
+                sprintf('wallet_total_withdrawn = wallet_total_withdrawn + %s', App::get_s()->quote($sum))
+            )
+            ->execute();
+
+        if ( ! App::get_s()->is_affected())
+        {
+            return FALSE;
+        }
         return TRUE;
     }
 
@@ -292,7 +335,7 @@ class User_model extends Emerald_model {
      */
     public function decrement_likes(): bool
     {
-        App::get_s()->from(self::get_table())
+        App::get_s()->from(self::CLASS_TABLE)
             ->where(['id' => $this->get_id()])
             ->update(sprintf('likes_balance = likes_balance - %s', App::get_s()->quote(1)))
             ->execute();
@@ -342,11 +385,18 @@ class User_model extends Emerald_model {
     /**
      * @param string $email
      *
-     * @return User_model
+     * @return User_model|bool
      */
-    public static function find_user_by_email(string $email): User_model
+    public static function find_user_by_email(string $email): ?User_model
     {
-        // TODO: task 1, аутентификация
+        $data = App::get_s()->from(self::CLASS_TABLE)
+            ->where(['email' => $email])
+            ->select()
+            ->one();
+        if (!$data) {
+            return false;
+        }
+        return new User_model($data['id']);
     }
 
     /**
@@ -367,7 +417,37 @@ class User_model extends Emerald_model {
         return $steam_id > 0;
     }
 
+    public function buy_boosterpack(Boosterpack_model $boosterpack,Item_model $item): bool
+    {
+        App::get_s()->set_transaction_serializable()->execute();
+        App::get_s()->start_trans()->execute();
 
+        Boosterpack_info_model::create([
+            'boosterpack_id' => $boosterpack->get_id(),
+            'item_id' => $item->get_id()
+        ]);
+
+
+        $boosterpack->recalculate_bank($item->get_price());
+
+        $this->remove_money($boosterpack->get_price(), Transaction_type::OBJECT_BOOSTER_PACK, $boosterpack->get_id());
+
+
+        App::get_s()->from(self::CLASS_TABLE)
+            ->where(['id' => $this->get_id()])
+            ->update(
+                sprintf('likes_balance = likes_balance + %s', App::get_s()->quote($item->get_price()))
+            )
+            ->execute();
+
+        if ( ! App::get_s()->is_affected())
+        {
+            App::get_s()->rollback()->execute();
+            return FALSE;
+        }
+        App::get_s()->commit()->execute();
+        return TRUE;
+    }
 
     /**
      * Returns current user or empty model

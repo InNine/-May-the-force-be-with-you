@@ -16,7 +16,7 @@ CREATE TABLE `analytics` (
   `object` varchar(50) NOT NULL,
   `action` varchar(50) NOT NULL,
   `object_id` int(11) DEFAULT NULL,
-  `amount` int(11) DEFAULT NULL,
+  `amount` decimal(10,2) DEFAULT '0.00',
   `time_created` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `time_updated` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`)
