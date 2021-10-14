@@ -396,7 +396,7 @@ class User_model extends Emerald_model {
         if (!$data) {
             return false;
         }
-        return new User_model($data['id']);
+        return self::transform_one($data);
     }
 
     /**
