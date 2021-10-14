@@ -133,13 +133,10 @@ class Main_page extends MY_Controller
         }
 
         $user = User_model::get_user();
-        if ( ! ($user->get_likes_balance() > 0)) {
-            return $this->response_error(Core::RESPONSE_GENERIC_UNAVAILABLE, ['message' => 'Your like balance is empty!']);
-        }
-
         if ( ! $comment->increment_likes($user)) {
             return $this->response_error(Core::RESPONSE_GENERIC_INTERNAL_ERROR, ['message' => 'something went wrong!']);
         }
+
         return $this->response_success(['message' => 'you successfully incremented likes on message!']);
     }
 
@@ -157,13 +154,10 @@ class Main_page extends MY_Controller
         }
 
         $user = User_model::get_user();
-        if ( ! ($user->get_likes_balance() > 0)) {
-            return $this->response_error(Core::RESPONSE_GENERIC_UNAVAILABLE, ['message' => 'Your like balance is empty!']);
-        }
-
         if ( ! $post->increment_likes($user)) {
             return $this->response_error(Core::RESPONSE_GENERIC_INTERNAL_ERROR, ['message' => 'something went wrong!']);
         }
+
         return $this->response_success(['message' => 'you successfully incremented likes on post!']);
     }
 
