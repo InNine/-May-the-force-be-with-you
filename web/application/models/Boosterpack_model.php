@@ -165,11 +165,9 @@ class Boosterpack_model extends Emerald_model
 
     public function recalculate_bank(int $likes): bool
     {
-        $bank = $this->get_bank() + $this->get_price() - $this->us - $likes;
-
         App::get_s()->from(self::CLASS_TABLE)
             ->where(['id' => $this->get_id()])
-            ->update(sprintf('bank = %s', App::get_s()->quote($bank)))
+            ->update(sprintf('`bank` = `bank` + `price` - `us` - %s', $likes))
             ->execute();
 
         if ( ! App::get_s()->is_affected())
