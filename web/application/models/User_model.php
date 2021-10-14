@@ -417,8 +417,16 @@ class User_model extends Emerald_model {
         return $steam_id > 0;
     }
 
-    public function buy_boosterpack(Boosterpack_model $boosterpack,Item_model $item): bool
+    /**
+     * @param Boosterpack_model $boosterpack
+     *
+     * @return Item_model|null
+     * @throws Exception
+     */
+    public function buy_boosterpack(Boosterpack_model $boosterpack): ?Item_model
     {
+        $item = Item_model::get_one_by_max_likes($boosterpack->get_maximum_likes());
+
         App::get_s()->set_transaction_serializable()->execute();
         App::get_s()->start_trans()->execute();
 
@@ -427,11 +435,9 @@ class User_model extends Emerald_model {
             'item_id' => $item->get_id()
         ]);
 
-
         $boosterpack->recalculate_bank($item->get_price());
 
         $this->remove_money($boosterpack->get_price(), Transaction_type::OBJECT_BOOSTER_PACK, $boosterpack->get_id());
-
 
         App::get_s()->from(self::CLASS_TABLE)
             ->where(['id' => $this->get_id()])
@@ -443,10 +449,10 @@ class User_model extends Emerald_model {
         if ( ! App::get_s()->is_affected())
         {
             App::get_s()->rollback()->execute();
-            return FALSE;
+            return null;
         }
         App::get_s()->commit()->execute();
-        return TRUE;
+        return $item;
     }
 
     /**

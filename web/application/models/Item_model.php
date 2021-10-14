@@ -89,9 +89,9 @@ class Item_model extends Emerald_model {
         return App::get_s()->is_affected();
     }
 
-    public static function get_all_by_max_likes(int $max_likes): array
+    public static function get_one_by_max_likes(int $max_likes): Item_model
     {
-        return static::transform_many(
+        $items = static::transform_many(
             App::get_s()
                 ->from(self::CLASS_TABLE)
                 ->where(
@@ -99,5 +99,8 @@ class Item_model extends Emerald_model {
                 )
                 ->many()
         );
+        $elem = random_int(0, count($items) - 1);
+
+        return $items[$elem];
     }
 }

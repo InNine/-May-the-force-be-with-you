@@ -190,6 +190,11 @@ class Main_page extends MY_Controller
 
     public function buy_boosterpack()
     {
+        // Check user is authorize
+        if (!User_model::is_logged()) {
+            return $this->response_error(Core::RESPONSE_GENERIC_NEED_AUTH);
+        }
+
         $booster_id = $this->input->get('boosterpack_id');
         if ( ! $booster_id) {
             return $this->response_error(Core::RESPONSE_GENERIC_NO_DATA);
@@ -200,12 +205,9 @@ class Main_page extends MY_Controller
             return $this->response_error(Core::RESPONSE_GENERIC_WRONG_PARAMS);
         }
 
-        $user = new User_model(1);
-        $items = Item_model::get_all_by_max_likes($booster->get_maximum_likes());
-        $elem = random_int(0, count($items) - 1);
-        /** @var Item_model $item */
-        $item = $items[$elem];
-        if ( ! $user->buy_boosterpack($booster, $item)) {
+        $user = User_model::get_user();
+        $item = $user->buy_boosterpack($booster);
+        if ( ! $item) {
             return $this->response_error(Core::RESPONSE_GENERIC_INTERNAL_ERROR);
         }
         return $this->response_success(['message' => 'you successfully got ' . $item->get_price() . ' likes!']);
