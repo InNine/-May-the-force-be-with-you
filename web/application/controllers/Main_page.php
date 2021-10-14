@@ -133,8 +133,10 @@ class Main_page extends MY_Controller
         }
 
         $user = User_model::get_user();
-        if ( ! $comment->increment_likes($user)) {
-            return $this->response_error(Core::RESPONSE_GENERIC_INTERNAL_ERROR, ['message' => 'something went wrong!']);
+        try {
+            $comment->increment_likes($user);
+        } catch (Exception $exception) {
+            return $this->response_error(Core::RESPONSE_GENERIC_INTERNAL_ERROR, ['message' => $exception->getMessage()]);
         }
 
         return $this->response_success(['message' => 'you successfully incremented likes on message!']);
@@ -154,8 +156,10 @@ class Main_page extends MY_Controller
         }
 
         $user = User_model::get_user();
-        if ( ! $post->increment_likes($user)) {
-            return $this->response_error(Core::RESPONSE_GENERIC_INTERNAL_ERROR, ['message' => 'something went wrong!']);
+        try {
+            $post->increment_likes($user);
+        } catch (Exception $exception) {
+            return $this->response_error(Core::RESPONSE_GENERIC_INTERNAL_ERROR, ['message' => $exception->getMessage()]);
         }
 
         return $this->response_success(['message' => 'you successfully incremented likes on post!']);
