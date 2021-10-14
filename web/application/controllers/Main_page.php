@@ -6,6 +6,7 @@ use Forms\Comment_create_form;
 use Forms\Login_form;
 use Model\Boosterpack_model;
 use Model\Comment_model;
+use Model\Enums\Category_type;
 use Model\Item_model;
 use Model\Login_model;
 use Model\Post_model;
@@ -104,15 +105,17 @@ class Main_page extends MY_Controller
     {
         $category = $this->input->get('category');
         $id = (int)$this->input->get('id');
-        if ( ! $category OR ! in_array($category, ['post', 'comment']) OR ! $id) {
+        if ( ! $category OR ! in_array($category, Category_type::get_list()) OR ! $id) {
             return $this->response_error(Core::RESPONSE_GENERIC_WRONG_PARAMS);
         }
 
         switch ($category) {
-            case 'post':
+            case Category_type::POST:
                 return $this->like_post($id);
-            case 'comment':
+            case Category_type::COMMENT:
                 return $this->like_comment($id);
+            default:
+                return $this->response_error(Core::RESPONSE_GENERIC_WRONG_PARAMS);
         }
     }
 
