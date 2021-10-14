@@ -52,6 +52,10 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 
 
 $route['default_controller'] = 'main_page';
+$route['index'] = 'main_page/index';
+$route['login'] = 'main_page/login';
+$route['like'] = 'main_page/like';
+$route['buy'] = 'main_page/buy_boosterpack';
 $route['404_override'] = 'api/error_404';
 $route['404'] = 'api/error_404';
 $route['error'] = 'api/error';

@@ -127,16 +127,6 @@ class Boosterpack_model extends Emerald_model
         return $this->save('time_updated', $time_updated);
     }
 
-    //////GENERATE
-
-    /**
-     * @return Boosterpack_info_model[]
-     */
-    public function get_boosterpack_info(): array
-    {
-        // TODO
-    }
-
     function __construct($id = NULL)
     {
         parent::__construct();
@@ -168,24 +158,25 @@ class Boosterpack_model extends Emerald_model
         return static::transform_many(App::get_s()->from(self::CLASS_TABLE)->many());
     }
 
-    /**
-     * @return int
-     */
-    public function open(): int
+    public function get_maximum_likes(): int
     {
-        // TODO: task 5, покупка и открытие бустерпака
+        return $this->get_bank() + ($this->get_price() - $this->get_us());
     }
 
-    /**
-     * @param int $max_available_likes
-     *
-     * @return Item_model[]
-     */
-    public function get_contains(int $max_available_likes): array
+    public function recalculate_bank(int $likes): bool
     {
-        // TODO: task 5, покупка и открытие бустерпака
-    }
+        App::get_s()->from(self::CLASS_TABLE)
+            ->where(['id' => $this->get_id()])
+            ->update(sprintf('`bank` = `bank` + `price` - `us` - %s', $likes))
+            ->execute();
 
+        if ( ! App::get_s()->is_affected())
+        {
+            return FALSE;
+        }
+
+        return TRUE;
+    }
 
     /**
      * @param Boosterpack_model $data
@@ -199,8 +190,6 @@ class Boosterpack_model extends Emerald_model
         {
             case 'default':
                 return self::_preparation_default($data);
-            case 'contains':
-                return self::_preparation_contains($data);
             default:
                 throw new Exception('undefined preparation type');
         }
@@ -221,14 +210,4 @@ class Boosterpack_model extends Emerald_model
         return $o;
     }
 
-
-    /**
-     * @param Boosterpack_model $data
-     *
-     * @return stdClass
-     */
-    private static function _preparation_contains(Boosterpack_model $data): stdClass
-    {
-        // TODO: task 5, покупка и открытие бустерпака
-    }
 }
